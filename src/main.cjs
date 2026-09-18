@@ -22,6 +22,7 @@ function handle(name,fn){ipcMain.handle('cobblemine:'+name,async(event,...args)=
 async function choosePack(){idle();const chosen=await dialog.showOpenDialog(win,{title:'Importer le modpack du serveur',filters:[{name:'Modpack Modrinth',extensions:['mrpack']}],properties:['openFile']});if(chosen.canceled)return null;
  return run('Import du modpack',async()=>{const file=chosen.filePaths[0];const info=await inspectPack(file);const target=path.join(root,'packs',info.id+'.mrpack');await fs.mkdir(path.dirname(target),{recursive:true});await fs.copyFile(file,target);selection={archive:target,name:info.plan.name};await atomicJson(path.join(root,'selection.json'),selection);installed=null;await atomicJson(path.join(root,'installed.json'),null);return {name:info.plan.name};});}
 function wire(){
+ handle('skin-avatar',()=>{const account=auth.public();return account?require('./skin-avatar.cjs').skinAvatar(account.name):null;});
  handle('check-launcher-update',async()=>{idle();await openStartup();return null;});
  handle('install-launcher-update',()=>updates.install());
  handle('defer-launcher-update',()=>updates.defer());

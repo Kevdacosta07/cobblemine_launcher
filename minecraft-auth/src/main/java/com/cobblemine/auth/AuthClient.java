@@ -1,5 +1,6 @@
 package com.cobblemine.auth;
 import com.google.gson.*;
+import com.cobblemine.auth.mixin.ClientLoginAccess;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -22,7 +23,10 @@ public final class AuthClient implements ClientModInitializer {
     if(port==null||!port.matches("[0-9]{1,5}")||secret==null||!secret.matches("[A-Za-z0-9_-]{43}"))return CompletableFuture.completedFuture(null);
     // Only the address actually selected in Minecraft is sent to the local launcher.
     // A different server cannot request a ticket by claiming the same server ID.
-    return client.submit(()->client.getCurrentServerEntry()==null?"":client.getCurrentServerEntry().address).thenCompose(address->{
+    return client.submit(()->{
+     var entry=((ClientLoginAccess)handler).cobblemineServerInfo();
+     return entry==null?"":entry.address;
+    }).thenCompose(address->{
      JsonObject body=new JsonObject();body.addProperty("serverId",serverId);body.addProperty("address",address);
      HttpRequest request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/ticket"))
       .timeout(Duration.ofSeconds(15)).header("Authorization","Bearer "+secret).header("Content-Type","application/json")

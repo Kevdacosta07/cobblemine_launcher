@@ -5,7 +5,7 @@ Le serveur exige une session Cobblemine et un ticket API à usage unique avant l
 ## Installation
 
 - Serveur : placer le JAR dans `mods` avec Fabric API. Configurer `.private/api.json` avec `apiUrl`, `serverId` et `serverKey`. Ne jamais distribuer ce fichier. Une configuration absente empêche le démarrage.
-- Client : le launcher 0.1.11 installe automatiquement `assets/cobblemine-auth.jar` dans chaque instance Fabric avant de lancer Java.
+- Client : le launcher 0.1.12 installe automatiquement `assets/cobblemine-auth.jar` dans chaque instance Fabric avant de lancer Java.
 - Le launcher reste ouvert pendant le jeu. Il fournit à son processus Java un accès temporaire à un service local lié à `127.0.0.1`, avec un secret aléatoire en mémoire. Le mot de passe et la session API ne sont jamais transmis au mod.
 - Les couples serveur/adresses autorisés sont définis dans `launcher-config.json` (`authServers`). Actuellement : `local-test`, `127.0.0.1:25565` et `localhost:25565`. Ajouter explicitement l'identifiant et l'adresse du serveur de production lors de son déploiement.
 
