@@ -10,14 +10,30 @@
 <symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m16 8-3 5-5 3 3-5Z"/></symbol>
 </defs></svg>
 <section id="signin" class="signin" aria-labelledby="signin-title">
- <aside class="signin-art"><img src="assets/logo.png" alt="Cobblemine" class="signin-logo"><div><span class="eyebrow light">TON AVENTURE COBBLEMINE</span><h1>Un pseudo.<br>Ton histoire.</h1><p>Retrouve ton compte.<br>Prépare ta prochaine aventure.</p></div></aside>
- <main class="signin-panel"><div class="signin-content"><span class="eyebrow">HEUREUX DE TE REVOIR</span><h2 id="signin-title">L’aventure t’attend.</h2><p class="signin-intro">Connecte-toi avec le compte créé sur le site Cobblemine.</p>
- <form id="signin-form"><fieldset id="signin-fields"><label for="signin-login">Pseudo ou adresse email</label><input id="signin-login" name="username" autocomplete="username" maxlength="254" required spellcheck="false" placeholder="Ton pseudo ou ton email">
- <label for="signin-password">Mot de passe</label><div class="signin-password"><input id="signin-password" type="password" autocomplete="current-password" maxlength="128" required><button id="show-password" type="button" aria-label="Afficher le mot de passe" aria-pressed="false">Afficher</button></div>
- <p id="signin-error" role="alert" hidden></p><p id="signin-note" class="signin-note" role="status"></p>
- <button type="submit" class="shop-button" id="signin-submit">Se connecter <span aria-hidden="true">→</span></button></fieldset></form>
- <button type="button" class="text-button" id="restore-session" hidden>Réessayer ma session enregistrée</button>
- <div class="signin-register">Pas encore de compte ? <button type="button" id="open-register" class="text-button">Créer mon compte ↗</button></div><p class="signin-footnote">Ton pseudo Minecraft est celui de ton compte Cobblemine.</p></div></main>
+  <header class="signin-brand"><img src="assets/logo.png" alt="Cobblemine"><span>LE DÉBUT DE TON AVENTURE</span></header>
+  <aside class="signin-story" aria-label="Bienvenue sur Cobblemine">
+    <span class="signin-kicker"><i aria-hidden="true"></i> UN MONDE À EXPLORER</span>
+    <h1>Ta prochaine<br>aventure commence <em>ici.</em></h1>
+    <p>Des rencontres, des découvertes.<br>Et une histoire qui n’appartient qu’à toi.</p>
+    <div class="signin-world"><span aria-hidden="true">✦</span> MINECRAFT <b>×</b> COBBLEMON</div>
+  </aside>
+  <main class="signin-panel"><div class="signin-content">
+    <div class="signin-card-heading"><span class="signin-emblem" aria-hidden="true"></span><span>TON ESPACE JOUEUR</span></div>
+    <h2 id="signin-title">Bienvenue<br>à la maison.</h2>
+    <p class="signin-intro">Connecte-toi avec ton compte Cobblemine<br>pour retrouver ton aventure.</p>
+    <form id="signin-form"><fieldset id="signin-fields">
+      <label for="signin-login">Pseudo ou adresse email</label>
+      <input id="signin-login" name="username" autocomplete="username" maxlength="254" required spellcheck="false" placeholder="Ton pseudo ou ton email">
+      <label for="signin-password">Mot de passe</label>
+      <div class="signin-password"><input id="signin-password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Ton mot de passe"><button id="show-password" type="button" aria-label="Afficher le mot de passe" aria-pressed="false">Afficher</button></div>
+      <p id="signin-error" role="alert" hidden></p><p id="signin-note" class="signin-note" role="status"></p>
+      <button type="submit" id="signin-submit">Se connecter <span aria-hidden="true">→</span></button>
+    </fieldset></form>
+    <button type="button" class="text-button" id="restore-session" hidden>Réessayer ma session enregistrée</button>
+    <div class="signin-register"><span>Nouveau dans l’aventure ?</span><button type="button" id="open-register" class="text-button">Créer mon compte <span aria-hidden="true">↗</span></button></div>
+    <p class="signin-footnote"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="6" y="10" width="12" height="10" rx="2"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg> Un seul compte pour le site et le launcher.</p>
+  </div></main>
+  <footer class="signin-caption"><span>EXPLORE. CAPTURE. CONSTRUIS.</span><span>Ton monde, ton histoire.</span></footer>
 </section><div class="launcher" hidden>
  <aside class="sidebar">
   <a class="logo-link" href="#accueil" aria-label="Cobblemine — Accueil"><img src="assets/logo.png" alt="Cobble Mine" width="180" height="120"></a>
