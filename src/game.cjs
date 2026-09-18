@@ -5,6 +5,7 @@ const core=require('@xmcl/core'),installer=require('@xmcl/installer');
 const {json,download,safePath,noSymlinks,atomicJson,readJson}=require('./utils.cjs');
 const {installPack,inspectPack}=require('./packs.cjs');
 const exec=promisify(execFile);
+const {downloadAgent}=require('./network.cjs');
 class Game{
  constructor(root,emit){this.root=root;this.emit=emit;this.resource=path.join(root,'minecraft');this.child=null;}
  progress(label,done=0,total=0){this.emit({type:'progress',label,done,total});}
@@ -21,11 +22,11 @@ class Game{
  if(selection?.archive){archive=selection.archive;const inspected=await inspectPack(archive);plan=inspected.plan;id=inspected.id;}else{plan=builtin;id='base-'+builtin.revision;}
  const instance=path.join(this.root,'instances',id);await fs.mkdir(instance,{recursive:true});await fs.mkdir(this.resource,{recursive:true});
  this.progress('Préparation de Minecraft 1.21.1');const list=await json('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json',{signal});const version=list.versions.find(v=>v.id==='1.21.1');if(!version)throw Error('Minecraft 1.21.1 introuvable.');
- await this.task(()=>installer.installTask(version,this.resource,{assetsDownloadConcurrency:4,librariesDownloadConcurrency:4}), 'Téléchargement de Minecraft 1.21.1',signal);
+ await this.task(()=>installer.installTask(version,this.resource,{agent:downloadAgent,assetsDownloadConcurrency:4,librariesDownloadConcurrency:4}), 'Téléchargement de Minecraft 1.21.1',signal);
  let versionId;
  if(plan.loader==='fabric'){this.progress('Installation de Fabric '+plan.loaderVersion);const artifact=await json('https://meta.fabricmc.net/v2/versions/loader/1.21.1/'+encodeURIComponent(plan.loaderVersion),{signal});versionId=await installer.installFabric(artifact,this.resource);}
- else{versionId=await this.task(()=>installer.installNeoForgedTask('neoforge',plan.loaderVersion,this.resource,{java}),'Installation de NeoForge',signal);}
- signal.throwIfAborted();const resolved=await core.Version.parse(this.resource,versionId);await this.task(()=>installer.installDependenciesTask(resolved,{assetsDownloadConcurrency:4,librariesDownloadConcurrency:4}),'Vérification des bibliothèques',signal);
+ else{versionId=await this.task(()=>installer.installNeoForgedTask('neoforge',plan.loaderVersion,this.resource,{java,agent:downloadAgent}),'Installation de NeoForge',signal);}
+ signal.throwIfAborted();const resolved=await core.Version.parse(this.resource,versionId);await this.task(()=>installer.installDependenciesTask(resolved,{agent:downloadAgent,assetsDownloadConcurrency:4,librariesDownloadConcurrency:4}),'Vérification des bibliothèques',signal);
  await installPack(plan,instance,{archive,signal,progress:(...args)=>this.progress(...args)});
  const result={instance,java,versionId,packName:plan.name,packId:id,installedAt:new Date().toISOString()};await atomicJson(path.join(this.root,'installed.json'),result);this.progress('Installation terminée',1,1);return result;}
  async launch(installed,settings,session,log){if(this.child)throw Error('Minecraft est déjà ouvert.');const [width,height]=settings.resolution.split('x').map(Number);

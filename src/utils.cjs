@@ -22,6 +22,9 @@ async function download(url,file,{hash,algorithm='sha512',size,signal,onProgress
  await fs.rename(temp,file);return;
  }catch(e){last=e;await fs.unlink(temp).catch(()=>{});if(signal?.aborted)throw e;}}
  throw last;}
-function cleanError(e){if(e?.name==='AbortError'||e?.name==='CancelError')return 'Opération annulée.';return String(e?.message||e||'Erreur inconnue').replace(/(Bearer\s+|access_token[=: ]+|refresh_token[=: ]+)\S+/gi,'$1[masqué]').slice(0,500);}
+function cleanError(e){if(e?.name==='AbortError'||e?.name==='CancelError'||e?.name==='DownloadAbortError')return 'Opération annulée.';
+ const seen=new Set();function describe(error,depth=0){if(!error||depth>4||seen.has(error))return '';seen.add(error);const nested=error.errors?.[0]||error.cause;const detail=nested?describe(nested,depth+1):'';const file=error.destination?path.basename(error.destination):'';return [error.message||String(error),file,detail].filter(Boolean).join(' · ');}
+ return describe(e).replace('Multiple errors occurred during download process','Le téléchargement a échoué').replace(/(Bearer\s+|access_token[=: ]+|refresh_token[=: ]+)\S+/gi,'$1[masqué]').slice(0,1000);}
+
 module.exports={safePath,noSymlinks,httpsUrl,response,json,hashFile,atomicJson,readJson,download,cleanError};
 

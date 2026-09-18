@@ -20,6 +20,15 @@ jobs:
       - name: Set build directory
         run: node -e "const fs=require('fs');const p=require('./package.json');p.build.directories.output='dist';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
       - run: npm run dist:win
+      - name: Verify downloads in Electron
+        shell: pwsh
+        run: |
+          $env:COBBLEMINE_CHECK_APP = (Resolve-Path 'dist/win-unpacked/resources/app.asar').Path
+          $env:COBBLEMINE_CHECK_OUTPUT = Join-Path $env:RUNNER_TEMP 'cobblemine-download-check'
+          $check = Start-Process -FilePath './node_modules/electron/dist/electron.exe' -ArgumentList 'scripts/check-electron-download.cjs' -WindowStyle Hidden -PassThru
+          if (-not $check.WaitForExit(120000)) { $check.Kill(); throw 'Download check timed out.' }
+          $result = Get-Content (Join-Path $env:COBBLEMINE_CHECK_OUTPUT 'result.json') | ConvertFrom-Json
+          if (-not $result.ok) { throw $result.error }
       - name: Publish release with update metadata
         env:
           GH_TOKEN: ${{ github.token }}

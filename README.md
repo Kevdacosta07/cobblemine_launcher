@@ -1,10 +1,10 @@
-# Cobblemine — launcher 0.1.3
+# Cobblemine — launcher 0.1.4
 
 Application de bureau avec l’identité blanche, le logo fourni et le décor d’exploration validé.
 
 ## Démarrage sous Windows
 
-Ouvrir l’installateur **Cobblemine-Setup-0.1.3-x64.exe**, puis lancer Cobblemine. L’application télécharge elle-même son Java 21 ; Node.js et Java ne sont pas nécessaires pour l’utilisateur final.
+Ouvrir l’installateur **Cobblemine-Setup-0.1.4-x64.exe**, puis lancer Cobblemine. L’application télécharge elle-même son Java 21 ; Node.js et Java ne sont pas nécessaires pour l’utilisateur final.
 
 1. Cliquer sur **Installer** pour télécharger Minecraft 1.21.1 et la base Cobblemon.
 2. Choisir un profil local dans Paramètres, ou configurer Microsoft (voir ci-dessous).
@@ -90,4 +90,6 @@ Ce mode fonctionne en solo et sur un serveur configuré pour accepter les profil
 
 ## Mises à jour au démarrage
 
-Voir [UPDATES.md](UPDATES.md). La version 0.1.3 est publiée sur GitHub avec son installateur Windows et ses métadonnées. Les 21 tests passent et le démarrage du binaire a été vérifié. Un essai utilisant electron-updater a détecté puis téléchargé et vérifié la version publiée depuis GitHub, sans exécuter l’installateur. Le remplacement complet d’une installation existante reste à vérifier sur une future mise à jour.
+Voir [UPDATES.md](UPDATES.md). La version 0.1.4 est publiée sur GitHub avec son installateur Windows et ses métadonnées. Les 21 tests passent et le démarrage du binaire a été vérifié. Un essai utilisant electron-updater a détecté puis téléchargé et vérifié la version publiée depuis GitHub, sans exécuter l’installateur. Le remplacement complet d’une installation existante reste à vérifier sur une future mise à jour.
+
+Correctif 0.1.4 : isolation du transport Undici 6 utilisé par XMCL pour éviter le dispatcher global incompatible d’Electron. Reproduction de l’erreur initiale dans Electron, puis téléchargement réel et vérification SHA-1 des métadonnées et du client Minecraft avec le code empaqueté corrigé.

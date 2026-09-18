@@ -1,6 +1,6 @@
 {
   "name": "cobblemine-launcher",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "Launcher Cobblemine pour Minecraft 1.21.1",
   "author": "Cobblemine",
@@ -20,7 +20,8 @@
     "@xmcl/installer": "5.4.0",
     "@xmcl/user": "4.4.2",
     "adm-zip": "0.6.1",
-    "electron-updater": "6.8.9"
+    "electron-updater": "6.8.9",
+    "undici": "6.28.0"
   },
   "devDependencies": {
     "electron": "44.4.1",
@@ -30,7 +31,7 @@
     "appId": "com.cobblemine.launcher",
     "productName": "Cobblemine",
     "directories": {
-      "output": "../../work/desktop-build-0.1.3"
+      "output": "../../work/desktop-build-0.1.4"
     },
     "files": [
       "src/**/*",
