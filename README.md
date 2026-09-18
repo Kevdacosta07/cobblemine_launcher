@@ -48,7 +48,7 @@ Pour publier un pack distant, fournir `packUrl` (HTTPS) et `packSha512` dans `la
 
 Le code est prévu pour Windows x64, macOS Intel/Apple Silicon et Linux x64. La construction macOS nécessite macOS. La création de l’AppImage Linux a été bloquée sur cet ordinateur Windows par la création de liens symboliques ; aucun AppImage ni application macOS validée n’est livré.
 
-Le fichier `.github/workflows/build.yml` prépare la construction sur les trois systèmes avec GitHub Actions. Il n’a pas été exécuté ni publié dans un dépôt. Les applications macOS et Linux nécessitent encore leur construction et un test sur leurs systèmes.
+Le fichier `.github/workflows/build.yml` prépare la construction sur les trois systèmes avec GitHub Actions. Il est publié dans le dépôt GitHub ; son exécution multiplateforme reste à valider. Les applications macOS et Linux nécessitent encore leur construction et un test sur leurs systèmes.
 
 Les binaires ne sont pas signés avec un certificat d’éditeur. Prévoir la signature Windows et la signature/notarisation macOS avant une diffusion publique.
 
@@ -87,3 +87,7 @@ Bibliothèques principales : [Electron](https://www.electronjs.org/docs/latest/t
 Dans Paramètres → Ton profil, choisir « Sans compte Microsoft », saisir un pseudo puis enregistrer. Le pseudo détermine une identité locale stable ; le modifier change cette identité et peut donner un inventaire différent sur le serveur. La connexion Microsoft reste disponible.
 
 Ce mode fonctionne en solo et sur un serveur configuré pour accepter les profils non authentifiés. Il ne permet pas de rejoindre un serveur qui exige une session Microsoft valide. La configuration actuelle de play.cobblemine.com n’a pas été vérifiée. Les téléchargements du jeu nécessitent Internet.
+
+## Mises à jour au démarrage
+
+Voir [UPDATES.md](UPDATES.md). La version 0.1.3 est publiée sur GitHub avec son installateur Windows et ses métadonnées. Les 21 tests passent et le démarrage du binaire a été vérifié. Un essai utilisant electron-updater a détecté puis téléchargé et vérifié la version publiée depuis GitHub, sans exécuter l’installateur. Le remplacement complet d’une installation existante reste à vérifier sur une future mise à jour.
