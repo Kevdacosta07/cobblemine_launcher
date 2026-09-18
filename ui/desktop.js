@@ -25,8 +25,8 @@ action('import-pack',async()=>{const result=await call('import-pack');if(result)
 action('base-pack',()=>modal('Utiliser la base Cobblemon ?','Le launcher utilisera la base fournie. Ton modpack précédent et ses mondes seront conservés dans leur dossier.','Utiliser la base',()=>call('base-pack')));
 action('update-pack',async()=>{await call('update-pack');notify('Modpack mis à jour.');});
 action('cancel',()=>call('cancel'));action('open-folder',()=>call('open-folder'));action('open-logs',()=>call('open-logs'));action('copy-server',async()=>{await call('copy-server');notify('Adresse du serveur copiée.');});
-action('copy-code',async()=>{await call('copy-code',deviceCode);notify('Code copié.');});action('open-microsoft',()=>call('open-microsoft'));
-action('about',()=>modal('Cobblemine · '+(state?.version||'0.1.5'),'Minecraft 1.21.1 · Fabric / NeoForge\n\nInstallation du jeu, Java 21, connexion Microsoft ou profil local et modpacks Modrinth.\n\nServeur : '+(state?.settings.serverAddress||'play.cobblemine.com')));
+action('copy-code',async()=>{await call('copy-code',deviceCode);notify('Code copié.');});action('open-microsoft',()=>call('open-microsoft'));action('open-shop',()=>call('open-shop'));
+action('about',()=>modal('Cobblemine · '+(state?.version||'0.1.6'),'Minecraft 1.21.1 · Fabric / NeoForge\n\nInstallation du jeu, Java 21, connexion Microsoft ou profil local et modpacks Modrinth.\n\nServeur : '+(state?.settings.serverAddress||'play.cobblemine.com')));
 action('read-news',()=>modal('L’inconnu t’attend.','Cobblemine est un projet de serveur Minecraft Cobblemon orienté aventure et exploration.\n\nLe launcher permet de préparer ton installation et de rejoindre le serveur. Le modpack exact du serveur sera ajouté lorsqu’il sera prêt.'));
 action('dialog-ok',async()=>{const callback=dialogAction;dialogAction=null;const wasAuth=authDialog;authDialog=false;$('#dialog').close();if(wasAuth)await call('cancel');else await callback?.();});
 $('.dialog-close').addEventListener('click',()=>$('#dialog').close());$('#dialog').addEventListener('close',()=>{if(authDialog){authDialog=false;api?.cancel().catch(()=>{});}dialogAction=null;});

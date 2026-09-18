@@ -30,6 +30,7 @@ function wire(){
  handle('reset-settings',async()=>{idle();const next={...defaults(config),microsoftClientId:settings.microsoftClientId,serverAddress:settings.serverAddress,authMode:settings.authMode,offlineName:settings.offlineName};await atomicJson(path.join(root,'preferences.json'),next);settings=next;broadcast();return publicState();});
  handle('login',()=>run('Connexion Microsoft',signal=>auth.login(settings.microsoftClientId,signal)));
  handle('logout',async()=>{idle();await auth.logout();broadcast();});
+ handle('open-shop',()=>{if(!config.shopUrl)throw Error('La boutique sera bientôt disponible.');return shell.openExternal(httpsUrl(config.shopUrl));});
  handle('open-microsoft',()=>shell.openExternal('https://www.microsoft.com/devicelogin'));
  handle('copy-code',code=>{if(typeof code!=='string'||!/^[-A-Z0-9]{5,20}$/.test(code))throw Error('Code invalide.');clipboard.writeText(code);});
  handle('cancel',()=>{if(operation)operation.controller.abort();});
