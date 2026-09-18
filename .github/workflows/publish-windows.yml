@@ -1,0 +1,37 @@
+name: Publish Windows release
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-windows
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Set build directory
+        run: node -e "const fs=require('fs');const p=require('./package.json');p.build.directories.output='dist';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+      - run: npm run dist:win
+      - name: Publish release with update metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $tag = "v$version"
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) { throw "This version already exists. Increase the package version first." }
+          $assets = Get-ChildItem dist -File | Where-Object { $_.Name -match '\.(exe|blockmap)$' -or $_.Name -eq 'latest.yml' } | ForEach-Object { $_.FullName }
+          if ($assets.Count -lt 3) { throw 'Missing release files.' }
+          gh release create $tag @assets --target $env:GITHUB_SHA --title "Cobblemine $version" --generate-notes --draft
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed; nothing has been published.' }
+          gh release edit $tag --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Publication failed.' }

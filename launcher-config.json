@@ -1,0 +1,9 @@
+{
+  "name": "Cobblemine",
+  "minecraft": "1.21.1",
+  "microsoftClientId": "",
+  "serverAddress": "play.cobblemine.com",
+  "packUrl": "",
+  "packSha512": "",
+  "updateProvider": "github"
+}

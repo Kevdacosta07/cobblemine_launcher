@@ -1,0 +1,59 @@
+'use strict';
+const {app,BrowserWindow,ipcMain,dialog,shell,safeStorage,Menu,clipboard}=require('electron');
+const fs=require('node:fs/promises'),path=require('node:path'),{pathToFileURL}=require('node:url');
+const {Auth}=require('./auth.cjs'),{Game}=require('./game.cjs'),{inspectPack}=require('./packs.cjs');
+const {defaults,maxRam,validateSettings}=require('./settings.cjs');
+const {atomicJson,readJson,download,hashFile,httpsUrl,cleanError}=require('./utils.cjs');
+const {offlineSession}=require('./offline.cjs');
+const {Updates}=require('./updates.cjs');
+const config=require('../launcher-config.json'),builtin=require('../builtin-pack.json');
+config.serverAddress=config.serverAddress||'play.cobblemine.com';
+if(process.platform==='win32')app.setAppUserModelId('com.cobblemine.launcher');
+if(process.env.COBBLEMINE_TEST_DATA)app.setPath('userData',path.resolve(process.env.COBBLEMINE_TEST_DATA));
+let updates,win,root,settings,selection,installed,auth,game,operation=null,lastProgress=null,logFile;
+const uiUrl=pathToFileURL(path.join(__dirname,'../ui/index.html')).href;
+const emit=event=>{if(event.type==='progress')lastProgress=event;if(win&&!win.isDestroyed())win.webContents.send('cobblemine:event',event);if(event.type==='game-exit'){if(event.code)log('Minecraft terminé avec le code '+event.code);broadcast();}};
+async function log(line){const secrets=[auth?.session?.accessToken,auth?.session?.refreshToken].filter(Boolean);let text=String(line);for(const secret of secrets)text=text.split(secret).join('[masqué]');text=text.replace(/(--accessToken\s+)\S+/gi,'$1[masqué]');await fs.appendFile(logFile,new Date().toISOString()+' '+text.slice(0,50000)+'\n').catch(()=>{});}
+const publicState=()=>({version:app.getVersion(),update:updates?.state,settings,maxRam:maxRam(),account:settings.authMode==='offline'?{...offlineSession(settings.offlineName).profile,offline:true}:auth.public(),selection:selection?{name:selection.name}:null,builtin:builtin.name,installed:installed?{name:installed.packName,date:installed.installedAt}:null,busy:operation?.label||null,running:Boolean(game.child),progress:lastProgress,root});
+function broadcast(){emit({type:'state',state:publicState()});}
+function idle(){if(updates?.state.status==='installing')throw Error('Le launcher redémarre pour se mettre à jour.');if(operation||game.child)throw Error('Attends la fin de l’opération ou ferme Minecraft.');}
+async function run(label,fn){idle();const controller=new AbortController();operation={label,controller};lastProgress=null;broadcast();try{return await fn(controller.signal);}catch(e){await log(cleanError(e));throw e;}finally{operation=null;lastProgress=null;broadcast();}}
+function handle(name,fn){ipcMain.handle('cobblemine:'+name,async(event,...args)=>{try{if(event.sender!==win.webContents||event.senderFrame!==win.webContents.mainFrame||event.senderFrame.url.split('#')[0]!==uiUrl)throw Error('Appel non autorisé.');return {ok:true,value:await fn(...args)};}catch(e){return {ok:false,error:cleanError(e)};}});}
+async function choosePack(){idle();const chosen=await dialog.showOpenDialog(win,{title:'Importer le modpack du serveur',filters:[{name:'Modpack Modrinth',extensions:['mrpack']}],properties:['openFile']});if(chosen.canceled)return null;
+ return run('Import du modpack',async()=>{const file=chosen.filePaths[0];const info=await inspectPack(file);const target=path.join(root,'packs',info.id+'.mrpack');await fs.mkdir(path.dirname(target),{recursive:true});await fs.copyFile(file,target);selection={archive:target,name:info.plan.name};await atomicJson(path.join(root,'selection.json'),selection);installed=null;await atomicJson(path.join(root,'installed.json'),null);return {name:info.plan.name};});}
+function wire(){
+ handle('check-launcher-update',()=>updates.check());
+ handle('install-launcher-update',()=>updates.install());
+ handle('defer-launcher-update',()=>updates.defer());
+ handle('state',async()=>{if(process.argv.includes('--smoke-test')){await atomicJson(path.join(root,'smoke-result.json'),{ok:true,preload:true,renderer:true,encryptedStorage:auth.canStore(),platform:process.platform});setTimeout(()=>app.quit(),1200);}return publicState();});
+ handle('save-settings',async input=>{idle();const next=validateSettings(input,config);if(settings.microsoftClientId!==next.microsoftClientId)await auth.logout();await atomicJson(path.join(root,'preferences.json'),next);settings=next;broadcast();return publicState();});
+ handle('reset-settings',async()=>{idle();const next={...defaults(config),microsoftClientId:settings.microsoftClientId,serverAddress:settings.serverAddress,authMode:settings.authMode,offlineName:settings.offlineName};await atomicJson(path.join(root,'preferences.json'),next);settings=next;broadcast();return publicState();});
+ handle('login',()=>run('Connexion Microsoft',signal=>auth.login(settings.microsoftClientId,signal)));
+ handle('logout',async()=>{idle();await auth.logout();broadcast();});
+ handle('open-microsoft',()=>shell.openExternal('https://www.microsoft.com/devicelogin'));
+ handle('copy-code',code=>{if(typeof code!=='string'||!/^[-A-Z0-9]{5,20}$/.test(code))throw Error('Code invalide.');clipboard.writeText(code);});
+ handle('cancel',()=>{if(operation)operation.controller.abort();});
+ handle('import-pack',choosePack);
+ handle('base-pack',async()=>{idle();selection=null;installed=null;await atomicJson(path.join(root,'selection.json'),null);await atomicJson(path.join(root,'installed.json'),null);broadcast();});
+ handle('install',()=>run('Installation',async signal=>{installed=await game.install(selection,signal);return publicState();}));
+ handle('play',()=>run('Préparation du jeu',async signal=>{const session=settings.authMode==='offline'?offlineSession(settings.offlineName):await auth.forLaunch(settings.microsoftClientId,signal);installed=await game.install(selection,signal);signal.throwIfAborted();await game.launch(installed,settings,session,log);return publicState();}));
+ handle('update-pack',()=>run('Mise à jour du modpack',async signal=>{if(!config.packUrl||!/^[a-f0-9]{128}$/i.test(config.packSha512))throw Error('Aucun modpack distant publié. Importe un fichier .mrpack pour le moment.');httpsUrl(config.packUrl);const archive=path.join(root,'packs',config.packSha512.slice(0,24)+'.mrpack');await download(config.packUrl,archive,{hash:config.packSha512,signal});const info=await inspectPack(archive);selection={archive,name:info.plan.name};await atomicJson(path.join(root,'selection.json'),selection);installed=await game.install(selection,signal);return publicState();}));
+ handle('open-folder',async()=>{await fs.mkdir(installed?.instance||root,{recursive:true});const result=await shell.openPath(installed?.instance||root);if(result)throw Error(result);});
+ handle('open-logs',async()=>{const result=await shell.openPath(logFile);if(result)throw Error(result);});
+ handle('copy-server',()=>{clipboard.writeText(settings.serverAddress);});
+}
+async function createWindow(){
+ win=new BrowserWindow({width:1280,height:820,minWidth:960,minHeight:680,title:'Cobblemine',backgroundColor:'#FFFFFF',icon:path.join(__dirname,'../ui/assets/app-icon.png'),show:false,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
+ win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',(event,url)=>{if(url.split('#')[0]!==uiUrl)event.preventDefault();});
+ win.webContents.session.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
+ win.webContents.session.setPermissionCheckHandler(()=>false);
+ win.on('close',event=>{if(operation||game.child){event.preventDefault();dialog.showMessageBox(win,{type:'info',title:'Cobblemine',message:game.child?'Ferme Minecraft avant de quitter le launcher.':'Annule l’opération en cours avant de quitter le launcher.',buttons:['Compris']});}});
+ win.once('ready-to-show',()=>{if(!process.argv.includes('--smoke-test'))win.show();});win.webContents.on('preload-error',(_event,_preload,error)=>log('PRELOAD_ERROR '+cleanError(error)));await win.loadFile(path.join(__dirname,'../ui/index.html'));await log('Interface chargée.');
+}
+if(!app.requestSingleInstanceLock()){app.quit();}else{
+ app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.focus();}});
+ app.whenReady().then(async()=>{root=app.getPath('userData');await fs.mkdir(root,{recursive:true});logFile=path.join(root,'launcher.log');const stat=await fs.stat(logFile).catch(()=>null);if(stat?.size>2*1024**2)await fs.rename(logFile,logFile+'.previous').catch(()=>{});await log('Démarrage Cobblemine '+app.getVersion());settings=await readJson(path.join(root,'preferences.json'),defaults(config));try{settings=validateSettings(settings,config);}catch{settings=defaults(config);}
+ selection=await readJson(path.join(root,'selection.json'),null);installed=await readJson(path.join(root,'installed.json'),null);
+ auth=new Auth(path.join(root,'account.encrypted'),safeStorage,emit);await auth.load();game=new Game(root,emit);Menu.setApplicationMenu(process.platform==='darwin'?Menu.buildFromTemplate([{label:'Cobblemine',submenu:[{role:'about'},{role:'quit'}]},{role:'editMenu'},{role:'windowMenu'}]):null);updates=new Updates({updater:require('electron-updater').autoUpdater,configured:config.updateProvider==='github',url:config.updateUrl,enabled:app.isPackaged&&!process.argv.includes('--smoke-test')&&(process.platform!=='linux'||Boolean(process.env.APPIMAGE)),canInstall:()=>!operation&&!game.child,emit,log});wire();await createWindow();if(!process.argv.includes('--smoke-test'))void updates.check();}).catch(async e=>{await log(e.stack||e.message);if(process.argv.includes('--smoke-test')){app.exit(1);return;}dialog.showErrorBox('Impossible de démarrer Cobblemine',cleanError(e));app.quit();});
+ app.on('window-all-closed',()=>app.quit());
+}

@@ -1,0 +1,85 @@
+{
+  "name": "cobblemine-launcher",
+  "version": "0.1.3",
+  "private": true,
+  "description": "Launcher Cobblemine pour Minecraft 1.21.1",
+  "author": "Cobblemine",
+  "license": "UNLICENSED",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "dist:mac": "electron-builder --mac dmg zip --x64 --arm64 --publish never",
+    "dist:linux": "electron-builder --linux AppImage --x64 --publish never",
+    "pack": "electron-builder --dir",
+    "configure-updates": "node scripts/configure-updates.cjs"
+  },
+  "dependencies": {
+    "@xmcl/core": "2.16.2",
+    "@xmcl/installer": "5.4.0",
+    "@xmcl/user": "4.4.2",
+    "adm-zip": "0.6.1",
+    "electron-updater": "6.8.9"
+  },
+  "devDependencies": {
+    "electron": "44.4.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.cobblemine.launcher",
+    "productName": "Cobblemine",
+    "directories": {
+      "output": "../../work/desktop-build-0.1.3"
+    },
+    "files": [
+      "src/**/*",
+      "ui/**/*",
+      "launcher-config.json",
+      "package.json",
+      "builtin-pack.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": "nsis",
+      "icon": "ui/assets/app-icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "Cobblemine-Setup-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.games",
+      "icon": "ui/assets/app-icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Game",
+      "icon": "ui/assets/app-icon.png"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Kevdacosta07",
+        "repo": "cobblemine_launcher",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "overrides": {
+    "@xmcl/unzip": "2.1.2",
+    "@xmcl/yauzl": "2.10.0",
+    "@xmcl/installer": {
+      "undici": "6.28.0"
+    },
+    "@xmcl/file-transfer": {
+      "undici": "6.28.0"
+    }
+  }
+}

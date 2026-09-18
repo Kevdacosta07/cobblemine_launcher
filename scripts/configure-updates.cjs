@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path');
+const {validateUpdateUrl}=require('../src/updates.cjs');
+const root=path.join(__dirname,'..');
+const url=validateUpdateUrl(process.argv[2]||process.env.COBBLEMINE_UPDATE_URL);
+if(!url)throw Error('Indique le dossier HTTPS des mises à jour.');
+const configPath=path.join(root,'launcher-config.json'),packagePath=path.join(root,'package.json');
+const config=JSON.parse(fs.readFileSync(configPath)),pkg=JSON.parse(fs.readFileSync(packagePath));
+config.updateUrl=url;pkg.build.publish=[{provider:'generic',url}];
+fs.writeFileSync(configPath,JSON.stringify(config,null,2)+'\n');fs.writeFileSync(packagePath,JSON.stringify(pkg,null,2)+'\n');
+console.log('Hébergement configuré. Reconstruis le launcher puis publie les fichiers de distribution.');
