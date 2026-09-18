@@ -6,6 +6,7 @@ const {json,download,safePath,noSymlinks,atomicJson,readJson}=require('./utils.c
 const {installPack,inspectPack}=require('./packs.cjs');
 const exec=promisify(execFile);
 const {downloadAgent}=require('./network.cjs');
+const {startBridge}=require('./join-bridge.cjs');
 class Game{
  constructor(root,emit){this.root=root;this.emit=emit;this.resource=path.join(root,'minecraft');this.child=null;}
  progress(label,done=0,total=0){this.emit({type:'progress',label,done,total});}
@@ -20,6 +21,7 @@ class Game{
  const {stderr,stdout}=await exec(executable,['-version'],{windowsHide:true,timeout:15000});if(!/version "21[.\"]/.test(stderr+stdout))throw Error('Java 21 ne démarre pas.');await fs.writeFile(path.join(root,'.complete'),target.version.name);return executable;}
  async install(selection,signal){const java=await this.ensureJava(signal);const builtin=require('../builtin-pack.json');let plan,id,archive;
  if(selection?.archive){archive=selection.archive;const inspected=await inspectPack(archive);plan=inspected.plan;id=inspected.id;}else{plan=builtin;id='base-'+builtin.revision;}
+ if(plan.loader!=='fabric')throw Error('La connexion Cobblemine nécessite un pack Fabric 1.21.1.');
  const instance=path.join(this.root,'instances',id);await fs.mkdir(instance,{recursive:true});await fs.mkdir(this.resource,{recursive:true});
  this.progress('Préparation de Minecraft 1.21.1');const list=await json('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json',{signal});const version=list.versions.find(v=>v.id==='1.21.1');if(!version)throw Error('Minecraft 1.21.1 introuvable.');
  await this.task(()=>installer.installTask(version,this.resource,{agent:downloadAgent,assetsDownloadConcurrency:4,librariesDownloadConcurrency:4}), 'Téléchargement de Minecraft 1.21.1',signal);
@@ -29,9 +31,12 @@ class Game{
  signal.throwIfAborted();const resolved=await core.Version.parse(this.resource,versionId);await this.task(()=>installer.installDependenciesTask(resolved,{agent:downloadAgent,assetsDownloadConcurrency:4,librariesDownloadConcurrency:4}),'Vérification des bibliothèques',signal);
  await installPack(plan,instance,{archive,signal,progress:(...args)=>this.progress(...args)});
  const result={instance,java,versionId,packName:plan.name,packId:id,installedAt:new Date().toISOString()};await atomicJson(path.join(this.root,'installed.json'),result);this.progress('Installation terminée',1,1);return result;}
- async launch(installed,settings,session,log){if(this.child)throw Error('Minecraft est déjà ouvert.');const [width,height]=settings.resolution.split('x').map(Number);
- const child=await core.launch({gamePath:installed.instance,resourcePath:this.resource,javaPath:installed.java,version:installed.versionId,accessToken:session.accessToken,userType:session.offline?'legacy':'msa',gameProfile:session.profile,features:{cobblemine_auth:{clientid:session.clientId,auth_xuid:session.xuid||'0'}},launcherName:'Cobblemine',versionType:'Cobblemine',minMemory:1024,maxMemory:settings.ram*1024,resolution:{width,height,fullscreen:settings.fullscreen},quickPlayMultiplayer:settings.autoJoin&&settings.serverAddress?settings.serverAddress:undefined,extraExecOption:{windowsHide:true},extraJVMArgs:['-Dfile.encoding=UTF-8']});
- this.child=child;child.stdout?.on('data',b=>log(b.toString()));child.stderr?.on('data',b=>log(b.toString()));child.once('error',e=>{log('Erreur processus : '+e.message);this.child=null;this.emit({type:'game-exit',code:-1});});child.once('exit',code=>{this.child=null;this.emit({type:'game-exit',code});});return child.pid;}
+ async launch(installed,settings,session,log,auth){if(this.child)throw Error('Minecraft est déjà ouvert.');const [width,height]=settings.resolution.split('x').map(Number);
+ await fs.mkdir(path.join(installed.instance,'mods'),{recursive:true});
+ await fs.copyFile(path.join(__dirname,'../assets/cobblemine-auth.jar'),path.join(installed.instance,'mods/cobblemine-auth.jar'));
+ const bridge=await startBridge(auth,require('../launcher-config.json').authServers);
+ let child;try{child=await core.launch({gamePath:installed.instance,resourcePath:this.resource,javaPath:installed.java,version:installed.versionId,accessToken:session.accessToken,userType:session.offline?'legacy':'msa',gameProfile:session.profile,features:{cobblemine_auth:{clientid:session.clientId,auth_xuid:session.xuid||'0'}},launcherName:'Cobblemine',versionType:'Cobblemine',minMemory:1024,maxMemory:settings.ram*1024,resolution:{width,height,fullscreen:settings.fullscreen},quickPlayMultiplayer:settings.autoJoin&&settings.serverAddress?settings.serverAddress:undefined,extraExecOption:{windowsHide:true,env:{...process.env,...bridge.env}},extraJVMArgs:['-Dfile.encoding=UTF-8']});}catch(error){bridge.close();throw error;}
+ this.child=child;child.stdout?.on('data',b=>log(b.toString()));child.stderr?.on('data',b=>log(b.toString()));child.once('error',e=>{bridge.close();log('Erreur processus : '+e.message);this.child=null;this.emit({type:'game-exit',code:-1});});child.once('exit',code=>{bridge.close();this.child=null;this.emit({type:'game-exit',code});});return child.pid;}
 }
 module.exports={Game};
 

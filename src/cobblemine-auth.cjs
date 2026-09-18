@@ -30,6 +30,12 @@ class Auth {
   try{this.session.account=this.account(await this.request('/v1/me',{token:this.session.accessToken,signal}));this.verified=true;this.notice='';return this.public();}catch(e){if(e.status===401)await this.clear();throw e;}
  }
  async logout(){if(this.session){try{await this.request('/v1/auth/logout',{body:{},token:this.session.accessToken});}catch(e){if(e.status!==401)throw e;}}await this.clear();this.notice='';}
+ async joinTicket(serverId){
+  await this.refresh();
+  const data=await this.request('/v1/join-tickets',{body:{serverId},token:this.session.accessToken});
+  if(!data||!/^[A-Za-z0-9_-]{43}$/.test(data.ticket)||!(Date.parse(data.expiresAt)>Date.now())||data.username!==this.session.account.username||data.minecraftUuid.replaceAll('-','')!==this.session.account.minecraftUuid.replaceAll('-',''))throw Error('Ticket de connexion invalide.');
+  return data.ticket;
+ }
  async forLaunch(signal){await this.refresh(signal);return offlineSession(this.session.account.username);}
 }
 module.exports={Auth};
