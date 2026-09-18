@@ -1,30 +1,25 @@
-# Cobblemine — launcher 0.1.5
+# Cobblemine — launcher 0.1.9
 
 Application de bureau avec l’identité blanche, le logo fourni et le décor d’exploration validé.
 
 ## Démarrage sous Windows
 
-Ouvrir l’installateur **Cobblemine-Setup-0.1.5-x64.exe**, puis lancer Cobblemine. L’application télécharge elle-même son Java 21 ; Node.js et Java ne sont pas nécessaires pour l’utilisateur final.
+Ouvrir l’installateur **Cobblemine-Setup-0.1.9-x64.exe**, puis lancer Cobblemine. L’application télécharge elle-même son Java 21 ; Node.js et Java ne sont pas nécessaires pour l’utilisateur final.
 
-1. Cliquer sur **Installer** pour télécharger Minecraft 1.21.1 et la base Cobblemon.
-2. Choisir un profil local dans Paramètres, ou configurer Microsoft (voir ci-dessous).
-3. En mode Microsoft, cliquer sur le bouton du compte et terminer la connexion dans le navigateur.
-4. Cliquer sur **Jouer**. Avec l’option « Rejoindre automatiquement », le jeu rejoint **play.cobblemine.com**.
+1. Créer un compte sur https://cobblemine.com/inscription.
+2. Après la vérification des mises à jour, se connecter avec son pseudo ou son email et son mot de passe Cobblemine.
+3. Installer le jeu, puis cliquer sur Jouer. Le pseudo et l'UUID Minecraft proviennent exclusivement du compte vérifié par l'API.
+4. Cliquer sur son pseudo pour consulter ses points et grades, ouvrir le site ou se déconnecter.
 
-La base fournie est figée : Cobblemon **1.8.1**, Fabric **0.19.5**, Fabric API **0.116.17+1.21.1**. Le serveur doit utiliser un ensemble compatible. Ce n’est pas encore un modpack spécifique au serveur.
+## Connexion Cobblemine
 
-## Configuration Microsoft (uniquement pour le mode Microsoft)
+Le processus principal contacte uniquement https://api.cobblemine.com par HTTPS. L'interface ne reçoit jamais le jeton de session. Les mots de passe ne sont pas enregistrés et le champ est vidé après chaque tentative.
 
-Le code de connexion est implémenté, mais aucun identifiant d’application appartenant à Cobblemine n’a été fourni. La connexion et une vraie partie avec compte Microsoft n’ont donc pas été validées de bout en bout. Il ne suffit pas de renseigner un identifiant quelconque.
+La session est conservée dans cobblemine-account.encrypted avec Electron safeStorage. Si aucun stockage chiffré n'est disponible, elle reste en mémoire. À chaque redémarrage et avant chaque lancement du jeu, l'API vérifie la session. Une panne réseau ne permet pas de jouer à partir d'une identité en cache ; un bouton permet de réessayer la session enregistrée. La déconnexion révoque la session sur l'API et efface le fichier local ; en cas de panne, elle demande de réessayer.
 
-Pour le propriétaire du projet :
-- Enregistrer une application Microsoft Entra acceptant les comptes Microsoft personnels et autorisant les flux clients publics.
-- Utiliser son **Application (client) ID**, qui est public. Ne pas créer ni envoyer de secret client ou de mot de passe.
-- Vérifier que cette application est autorisée à accéder aux services Xbox/Minecraft. Si Microsoft renvoie « Invalid app registration » ou un refus 403, l’enregistrement doit être autorisé côté Microsoft/Mojang ; un changement d’interface ne peut pas résoudre ce refus.
-- Dans le launcher, ouvrir **Paramètres → Connexion Microsoft · configuration du projet**, saisir cet ID et enregistrer.
-- Pour distribuer le launcher aux joueurs sans cette étape manuelle, renseigner cet ID dans `launcher-config.json`, puis reconstruire les applications.
+La sélection libre d'un pseudo et la connexion Microsoft ne sont plus proposées. Les anciens réglages de profil sont ignorés pour le lancement. Minecraft utilise l'identité offline calculée pour le pseudo canonique ; aucun jeton API n'est passé à Java ou placé dans ses arguments.
 
-Le parcours utilise le protocole [Microsoft Device Code](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code). Les mots de passe restent sur les pages Microsoft. Les jetons sont chiffrés par le système avec Electron safeStorage ; si un stockage chiffré n’est pas disponible sur Linux, ils restent uniquement en mémoire pour la session.
+Cette version connecte le launcher, pas encore le serveur Minecraft : les mods client/serveur et l'échange protégé des tickets restent à implémenter. Un utilisateur d'un launcher tiers doit être contrôlé par le futur mod serveur ; le launcher seul ne protège pas un serveur offline contre l'usurpation de pseudo.
 
 ## Ton futur modpack
 
@@ -41,7 +36,7 @@ Pour publier un pack distant, fournir `packUrl` (HTTPS) et `packSha512` dans `la
 - Vérification des dépendances déclarées par Cobblemon.
 - Construction des arguments de démarrage vers play.cobblemine.com, sans utiliser de faux compte pour démarrer le jeu.
 - Démarrage Electron sous Windows : interface et pont de communication chargés, stockage chiffré disponible.
-- Les tests réels de connexion Microsoft, d’entrée en jeu et de connexion au serveur restent à effectuer avec l’application Microsoft autorisée et le compte du joueur.
+- Connexion réelle à l’API, erreur de mot de passe, restauration après redémarrage, pseudo imposé et déconnexion testés dans Electron. Le compte de test a été supprimé. L’entrée sur le serveur avec les futurs mods reste à vérifier.
 - La branche NeoForge est intégrée pour les imports, mais n’a pas été testée avec un vrai pack NeoForge.
 
 ## macOS et Linux
@@ -90,8 +85,8 @@ Ce mode fonctionne en solo et sur un serveur configuré pour accepter les profil
 
 ## Mises à jour au démarrage
 
-Voir [UPDATES.md](UPDATES.md). La version 0.1.5 est publiée sur GitHub avec son installateur Windows et ses métadonnées. Les 21 tests passent et le démarrage du binaire a été vérifié. Un essai utilisant electron-updater a détecté puis téléchargé et vérifié la version publiée depuis GitHub, sans exécuter l’installateur. Le remplacement complet d’une installation existante reste à vérifier sur une future mise à jour.
+Voir [UPDATES.md](UPDATES.md). La version 0.1.9 est publiée sur GitHub avec son installateur Windows et ses métadonnées. Les 21 tests passent et le démarrage du binaire a été vérifié. Un essai utilisant electron-updater a détecté puis téléchargé et vérifié la version publiée depuis GitHub, sans exécuter l’installateur. Le remplacement complet d’une installation existante reste à vérifier sur une future mise à jour.
 
 Correctif 0.1.4 : isolation du transport Undici 6 utilisé par XMCL pour éviter le dispatcher global incompatible d’Electron. Reproduction de l’erreur initiale dans Electron, puis téléchargement réel et vérification SHA-1 des métadonnées et du client Minecraft avec le code empaqueté corrigé.
 
-Version 0.1.5 : écran de démarrage dédié avec logo centré, recherche et installation avant ouverture du launcher. 22 tests passent ; transition entre écran de démarrage et interface vérifiée dans le binaire Windows.
+Version 0.1.9 : écran de démarrage dédié avec logo centré, recherche et installation avant ouverture du launcher. 22 tests passent ; transition entre écran de démarrage et interface vérifiée dans le binaire Windows.
