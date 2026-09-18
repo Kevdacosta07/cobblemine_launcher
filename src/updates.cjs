@@ -6,7 +6,7 @@ function validateUpdateUrl(value){
  return u.href.replace(/\/?$/,'/');
 }
 class Updates{
- constructor({updater,url,configured=false,enabled=true,canInstall,emit,log=()=>{},schedule=setTimeout,unschedule=clearTimeout}){
+ constructor({updater,url,configured=false,enabled=true,autoRestart=true,canInstall,emit,log=()=>{},schedule=setTimeout,unschedule=clearTimeout}){
   Object.assign(this,{updater,canInstall,emit,log,schedule,unschedule});this.timer=null;this.pending=null;this.interacted=false;
   this.state={status:'disabled',message:'Les mises à jour seront disponibles lorsque leur hébergement sera configuré.'};
   this.url=validateUpdateUrl(url);
@@ -20,8 +20,8 @@ class Updates{
   updater.on('update-not-available',()=>this.set('current','Ton launcher est à jour.'));
   updater.on('error',e=>this.fail(e));
   updater.on('update-downloaded',info=>{
-   this.set('ready',this.interacted?'Nouvelle version prête. Redémarre pour l’installer.':'Nouvelle version prête. Redémarrage dans 5 secondes…',{version:info.version});
-   if(!this.interacted)this.timer=schedule(()=>{this.timer=null;if(!this.interacted&&this.canInstall())this.install();else this.defer();},5000);
+   this.set('ready',!autoRestart?'Nouvelle version prête à installer.':this.interacted?'Nouvelle version prête. Redémarre pour l’installer.':'Nouvelle version prête. Redémarrage dans 5 secondes…',{version:info.version});
+   if(autoRestart&&!this.interacted)this.timer=schedule(()=>{this.timer=null;if(!this.interacted&&this.canInstall())this.install();else this.defer();},5000);
   });
  }
  set(status,message,extra={}){this.state={status,message,...extra};this.emit({type:'launcher-update',update:this.state});}

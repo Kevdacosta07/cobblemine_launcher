@@ -33,3 +33,5 @@ test('Les versions sans hébergement ou en mode développement ne contactent pas
 test('Un hébergement alternatif doit utiliser HTTPS sans secrets',()=>{
  for(const url of ['http://example.org','file:///a','https://user:secret@example.org','https://example.org/?token=a'])assert.throws(()=>validateUpdateUrl(url));assert.equal(validateUpdateUrl('https://example.org/releases'),'https://example.org/releases/');
 });
+
+test('Le démarrage dédié attend que son écran déclenche l’installation',()=>{const s=setup({autoRestart:false});s.updater.emit('update-downloaded',{version:'0.2.0'});s.tick();assert.equal(s.installs(),0);assert.equal(s.controller.state.status,'ready');s.controller.install();assert.equal(s.installs(),1);});

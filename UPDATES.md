@@ -2,7 +2,7 @@
 
 Source : https://github.com/Kevdacosta07/cobblemine_launcher/releases
 
-L’application installée recherche une version stable plus récente à chaque démarrage et la télécharge. Sans interaction, elle redémarre après cinq secondes. Une interaction, une partie ou une opération en cours reporte le redémarrage ; le bouton « Redémarrer » permet de l’appliquer ensuite. Une panne réseau laisse le launcher utilisable. Les données du joueur restent dans son dossier utilisateur.
+Au démarrage, une fenêtre blanche avec le logo centré recherche les mises à jour avant d’ouvrir le launcher. Une nouvelle version est téléchargée puis installée avec redémarrage automatique. Sans mise à jour, le launcher s’ouvre. En cas d’erreur réseau, l’écran propose de réessayer ou de continuer. Le bouton de vérification manuelle dans les paramètres utilise aussi cet écran ; il est indisponible pendant une partie ou une opération. Les données du joueur restent dans son dossier utilisateur.
 
 Les versions 0.1.2 et antérieures nécessitent une dernière installation manuelle. Utiliser l’installateur NSIS pour recevoir les mises à jour Windows ; win-unpacked sert au développement.
 
