@@ -1,92 +1,31 @@
-# Cobblemine — launcher 0.1.10
+# Cobblemine Launcher
 
-Application de bureau avec l’identité blanche, le logo fourni et le décor d’exploration validé.
+Launcher Electron pour Minecraft 1.21.1, Fabric et Cobblemon 1.8.1. Connexion avec le compte créé sur https://cobblemine.com/inscription ; le pseudo et l'UUID sont imposés par l'API centrale. Le mod client embarqué échange les tickets à usage unique avec le serveur via un pont local protégé. Aucun jeton API n'est transmis à Java.
 
-## Démarrage sous Windows
+## Plateformes de la version 0.1.15
 
-Ouvrir l’installateur **Cobblemine-Setup-0.1.10-x64.exe**, puis lancer Cobblemine. L’application télécharge elle-même son Java 21 ; Node.js et Java ne sont pas nécessaires pour l’utilisateur final.
+- Windows x64 : installateur NSIS, mises à jour automatiques.
+- macOS Intel (x64) et Apple Silicon (arm64) : DMG distincts et archives ZIP. Cette édition de test n'est pas signée avec un certificat Developer ID ni notariée ; Gatekeeper peut en bloquer l'ouverture. Ne pas désactiver globalement les protections macOS. Installer les versions suivantes manuellement ; le bouton de mise à jour ouvre les téléchargements GitHub. Une signature Apple et une notarisation sont nécessaires pour une distribution Mac transparente et les mises à jour automatiques.
+- Linux x64 : AppImage (nécessite un environnement de bureau et FUSE 2), plus archive tar.gz en alternative. Autoriser l'exécution du fichier dans ses propriétés. Les mises à jour automatiques sont disponibles avec l'AppImage ; l'archive se remplace manuellement. Linux ARM n'est pas encore distribué.
 
-1. Créer un compte sur https://cobblemine.com/inscription.
-2. Après la vérification des mises à jour, se connecter avec son pseudo ou son email et son mot de passe Cobblemine.
-3. Installer le jeu, puis cliquer sur Jouer. Le pseudo et l'UUID Minecraft proviennent exclusivement du compte vérifié par l'API.
-4. Cliquer sur son pseudo pour consulter ses points et grades, ouvrir le site ou se déconnecter.
+Java 21 est téléchargé et vérifié pour le système et l'architecture de l'application. Les versions Mac utilisent leur Java natif Intel ou ARM. Les données restent dans le dossier utilisateur Electron `Cobblemine` et sont accessibles depuis les paramètres.
 
-## Connexion Cobblemine
+Le serveur public reste en préparation. L'autorisation du serveur dans `launcher-config.json` doit correspondre au serveur inscrit dans l'API. Le serveur de test configuré par défaut est local ; il ne devient pas accessible publiquement en publiant le launcher.
 
-Le processus principal contacte uniquement https://api.cobblemine.com par HTTPS. L'interface ne reçoit jamais le jeton de session. Les mots de passe ne sont pas enregistrés et le champ est vidé après chaque tentative.
+## Connexion et confidentialité
 
-La session est conservée dans cobblemine-account.encrypted avec Electron safeStorage. Si aucun stockage chiffré n'est disponible, elle reste en mémoire. À chaque redémarrage et avant chaque lancement du jeu, l'API vérifie la session. Une panne réseau ne permet pas de jouer à partir d'une identité en cache ; un bouton permet de réessayer la session enregistrée. La déconnexion révoque la session sur l'API et efface le fichier local ; en cas de panne, elle demande de réessayer.
-
-La sélection libre d'un pseudo et la connexion Microsoft ne sont plus proposées. Les anciens réglages de profil sont ignorés pour le lancement. Minecraft utilise l'identité offline calculée pour le pseudo canonique ; aucun jeton API n'est passé à Java ou placé dans ses arguments.
-
-Cette version connecte le launcher, pas encore le serveur Minecraft : les mods client/serveur et l'échange protégé des tickets restent à implémenter. Un utilisateur d'un launcher tiers doit être contrôlé par le futur mod serveur ; le launcher seul ne protège pas un serveur offline contre l'usurpation de pseudo.
-
-## Ton futur modpack
-
-Exporter le modpack au format **Modrinth .mrpack**, puis utiliser **Paramètres → Importer un .mrpack**. Minecraft doit être en 1.21.1, avec Fabric ou NeoForge. Les archives ZIP CurseForge ordinaires ne sont pas prises en charge.
-
-Le launcher vérifie les empreintes SHA-512 des fichiers téléchargés. Les éléments réservés au serveur sont ignorés. Les éléments client optionnels sont inclus. Les dossiers overrides et client-overrides sont pris en charge ; les configurations déjà présentes sont conservées. Chaque archive différente dispose de son propre dossier d’instance : les anciennes installations et sauvegardes restent disponibles.
-
-Pour publier un pack distant, fournir `packUrl` (HTTPS) et `packSha512` dans `launcher-config.json`. Le bouton « Mettre à jour le pack » installe cette archive vérifiée. Une nouvelle archive nécessite une mise à jour de cette configuration et une nouvelle construction du launcher. Le launcher recherche aussi ses propres mises à jour au démarrage.
-
-## Ce qui a été vérifié
-
-- Tests automatisés : validation des chemins de fichiers, du format modpack, des réglages, téléchargements corrompus, reprise, annulation et préservation des configurations.
-- Installation réelle sous Windows : Java 21, Minecraft 1.21.1, Fabric, Cobblemon et Fabric API.
-- Vérification des dépendances déclarées par Cobblemon.
-- Construction des arguments de démarrage vers play.cobblemine.com, sans utiliser de faux compte pour démarrer le jeu.
-- Démarrage Electron sous Windows : interface et pont de communication chargés, stockage chiffré disponible.
-- Connexion réelle à l’API, erreur de mot de passe, restauration après redémarrage, pseudo imposé et déconnexion testés dans Electron. Le compte de test a été supprimé. L’entrée sur le serveur avec les futurs mods reste à vérifier.
-- La branche NeoForge est intégrée pour les imports, mais n’a pas été testée avec un vrai pack NeoForge.
-
-## macOS et Linux
-
-Le code est prévu pour Windows x64, macOS Intel/Apple Silicon et Linux x64. La construction macOS nécessite macOS. La création de l’AppImage Linux a été bloquée sur cet ordinateur Windows par la création de liens symboliques ; aucun AppImage ni application macOS validée n’est livré.
-
-Le fichier `.github/workflows/build.yml` prépare la construction sur les trois systèmes avec GitHub Actions. Il est publié dans le dépôt GitHub ; son exécution multiplateforme reste à valider. Les applications macOS et Linux nécessitent encore leur construction et un test sur leurs systèmes.
-
-Les binaires ne sont pas signés avec un certificat d’éditeur. Prévoir la signature Windows et la signature/notarisation macOS avant une diffusion publique.
+Le processus principal contacte l'API en HTTPS. Aucun mot de passe n'est conservé. Les sessions sont chiffrées avec Electron safeStorage ; en l'absence de stockage sécurisé, notamment Linux `basic_text`, elles restent en mémoire. La session est revalidée au redémarrage et avant le lancement. Les clés techniques du serveur ne doivent jamais être embarquées.
 
 ## Développement
 
-Prérequis : Node.js récent (22.16 ou supérieur ; 24 recommandé pour les constructions) et npm.
+Node.js 24 et npm : `npm ci`, `npm test`, `npm start`.
 
-```text
-npm ci
-npm test
-npm start
-npm run dist:win
-npm run dist:mac
-npm run dist:linux
-```
+Distribution sur le système cible : `npm run dist:win`, `npm run dist:mac`, `npm run dist:linux`. Les versions et dépendances sont verrouillées. Les paquets `.mrpack` peuvent être importés depuis les paramètres ; le pack doit cibler Fabric 1.21.1 pour l'authentification Cobblemine.
 
-Les commandes de distribution doivent être exécutées sur le système correspondant. La sortie de construction par défaut est `../../work/desktop-build` ; le workflow GitHub la remplace par `dist`.
+## Construction et validation
 
-Dossiers :
-- `src/` : application Electron, authentification, installation et validation.
-- `ui/` : interface et images locales.
-- `builtin-pack.json` : versions et empreintes figées de la base Cobblemon.
-- `launcher-config.json` : adresse, ID Microsoft et éventuel modpack distant.
-- `test/` : tests.
-- `scripts/resolve-pack.cjs` : outil réservé au mainteneur pour actualiser le pack embarqué.
-- `scripts/install-check.cjs` : test d’installation réelle, écrit dans le dossier work du projet initial.
+Le workflow manuel **Build Cobblemine** construit quatre architectures sur des runners natifs : Windows x64, macOS Intel, macOS ARM et Linux x64. Il exécute les tests, lance Java 21 téléchargé puis démarre le launcher empaqueté pour vérifier ses fenêtres, son preload et son interface. Les archives et rapports `platform-check.json` sont conservés comme artifacts. Cela ne remplace pas un test complet en jeu sur chaque système.
 
-Les dépendances sont verrouillées. Quelques versions de dépendances XMCL sont explicitement fixées pour éviter des paquets publiés incomplets et utiliser une version corrigée du transport HTTP.
+Le drapeau Chromium `--no-sandbox` utilisé pour le smoke test Linux concerne exclusivement le runner CI isolé. Il n'est ni enregistré dans le launcher ni proposé aux utilisateurs.
 
-Les données du joueur restent dans le dossier utilisateur de Cobblemine, accessible via **Dossier du jeu**. **Journal du launcher** ouvre le journal d’exécution. Les options du prototype web précédent ne sont pas importées automatiquement.
-
-Bibliothèques principales : [Electron](https://www.electronjs.org/docs/latest/tutorial/security), [XMCL](https://github.com/Voxelum/x-minecraft-launcher), [Modrinth](https://docs.modrinth.com/api/operations/getprojectversions/). Le décor a été généré avec l’outil d’images intégré lors du prototype ; le logo est celui fourni par le propriétaire du projet.
-
-
-## Jouer sans compte Microsoft
-Dans Paramètres → Ton profil, choisir « Sans compte Microsoft », saisir un pseudo puis enregistrer. Le pseudo détermine une identité locale stable ; le modifier change cette identité et peut donner un inventaire différent sur le serveur. La connexion Microsoft reste disponible.
-
-Ce mode fonctionne en solo et sur un serveur configuré pour accepter les profils non authentifiés. Il ne permet pas de rejoindre un serveur qui exige une session Microsoft valide. La configuration actuelle de play.cobblemine.com n’a pas été vérifiée. Les téléchargements du jeu nécessitent Internet.
-
-## Mises à jour au démarrage
-
-Voir [UPDATES.md](UPDATES.md). La version 0.1.10 est publiée sur GitHub avec son installateur Windows et ses métadonnées. Les 21 tests passent et le démarrage du binaire a été vérifié. Un essai utilisant electron-updater a détecté puis téléchargé et vérifié la version publiée depuis GitHub, sans exécuter l’installateur. Le remplacement complet d’une installation existante reste à vérifier sur une future mise à jour.
-
-Correctif 0.1.4 : isolation du transport Undici 6 utilisé par XMCL pour éviter le dispatcher global incompatible d’Electron. Reproduction de l’erreur initiale dans Electron, puis téléchargement réel et vérification SHA-1 des métadonnées et du client Minecraft avec le code empaqueté corrigé.
-
-Version 0.1.10 : écran de démarrage dédié avec logo centré, recherche et installation avant ouverture du launcher. 22 tests passent ; transition entre écran de démarrage et interface vérifiée dans le binaire Windows.
+Publier tous les fichiers d'une nouvelle version depuis ces artifacts après validation. Conserver `latest.yml` et `latest-linux.yml`, ainsi que les blockmaps associées. Les fichiers macOS sont installés manuellement tant que la signature Apple n'est pas configurée. Ne pas écraser les fichiers d'une version publiée.

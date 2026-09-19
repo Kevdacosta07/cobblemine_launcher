@@ -1,13 +1,13 @@
-# Mises à jour de Cobblemine
+# Mises à jour
 
 Source : https://github.com/Kevdacosta07/cobblemine_launcher/releases
 
-Au démarrage, une fenêtre blanche avec le logo centré recherche les mises à jour avant d’ouvrir le launcher. Une nouvelle version est téléchargée puis installée avec redémarrage automatique. Sans mise à jour, le launcher s’ouvre. En cas d’erreur réseau, l’écran propose de réessayer ou de continuer. Le bouton de vérification manuelle dans les paramètres utilise aussi cet écran ; il est indisponible pendant une partie ou une opération. Les données du joueur restent dans son dossier utilisateur.
+Windows NSIS et Linux AppImage vérifient les nouvelles versions au démarrage. L'écran dédié télécharge et installe la mise à jour avant d'ouvrir le launcher. En cas d'erreur réseau, il propose de réessayer ou de continuer. Une partie en cours interdit le redémarrage de mise à jour.
 
-Les versions 0.1.2 et antérieures nécessitent une dernière installation manuelle. Utiliser l’installateur NSIS pour recevoir les mises à jour Windows ; win-unpacked sert au développement.
+macOS 0.1.15 est une édition de test sans certificat Apple Developer ID : les mises à jour automatiques sont désactivées. Le bouton de vérification ouvre la page des versions pour télécharger le DMG correspondant à Intel ou Apple Silicon. Les installations Linux depuis tar.gz se mettent aussi à jour manuellement.
 
-Pour publier une prochaine version Windows : augmenter la version dans package.json et package-lock.json, pousser le code, puis lancer « Publish Windows release » dans GitHub Actions. Ce workflow teste, construit et publie l’installateur, sa blockmap et latest.yml via une version brouillon. Ne pas remplacer les fichiers d’une ancienne version.
+La publication multiplateforme exige les quatre builds natifs du workflow Build Cobblemine. Publier en une seule version les installateurs, ZIP Mac, AppImage, archive Linux, blockmaps Windows/Linux et métadonnées `latest.yml`, `latest-linux.yml`. Le workflow historique Publish Windows release ne doit pas remplacer cette publication complète.
 
-Le workflow de construction multiplateforme fournit aussi les métadonnées. macOS nécessite une application signée, avec les cibles DMG et ZIP ; Linux utilise AppImage. Ces plateformes restent à valider sur leur système.
+Pour activer les mises à jour macOS ultérieurement : configurer la signature et la notarisation, retirer l'exclusion macOS dans `src/main.cjs`, publier DMG, ZIP et métadonnées macOS avec les architectures correspondantes, puis vérifier une installation et une mise à jour natives.
 
-Référence : https://www.electron.build/docs/features/auto-update/
+Documentation : https://www.electron.build/docs/features/auto-update/
