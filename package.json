@@ -1,6 +1,6 @@
 {
   "name": "cobblemine-launcher",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "private": true,
   "description": "Launcher Cobblemine pour Minecraft 1.21.1",
   "author": "Cobblemine",
@@ -11,7 +11,7 @@
     "test": "node --test test/*.test.cjs",
     "dist:win": "electron-builder --win nsis --x64 --publish never",
     "dist:mac": "electron-builder --mac dmg zip --x64 --arm64 --publish never",
-    "dist:linux": "electron-builder --linux AppImage --x64 --publish never",
+    "dist:linux": "electron-builder --linux AppImage tar.gz --x64 --publish never",
     "pack": "electron-builder --dir",
     "configure-updates": "node scripts/configure-updates.cjs"
   },
@@ -31,7 +31,7 @@
     "appId": "com.cobblemine.launcher",
     "productName": "Cobblemine",
     "directories": {
-      "output": "../../work/desktop-build-0.1.14"
+      "output": "../../work/desktop-build-0.1.15"
     },
     "files": [
       "src/**/*",
@@ -58,12 +58,15 @@
         "zip"
       ],
       "category": "public.app-category.games",
-      "icon": "ui/assets/app-icon.png"
+      "icon": "ui/assets/app-icon.png",
+      "artifactName": "Cobblemine-${version}-mac-${arch}.${ext}"
     },
     "linux": {
       "target": "AppImage",
       "category": "Game",
-      "icon": "ui/assets/app-icon.png"
+      "icon": "ui/assets/app-icon.png",
+      "artifactName": "Cobblemine-${version}-linux-${arch}.${ext}",
+      "executableName": "cobblemine"
     },
     "publish": [
       {
