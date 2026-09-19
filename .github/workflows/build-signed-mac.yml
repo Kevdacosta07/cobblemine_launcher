@@ -37,12 +37,18 @@ jobs:
           done
       - run: npm ci
       - run: npm test
+      - name: Prepare certificate for Apple Keychain
+        id: signing
+        run: node scripts/prepare-mac-certificate.cjs
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
       - name: Set build directory
         run: node -e "const fs=require('fs');const p=require('./package.json');p.build.directories.output='dist';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
       - name: Sign and notarize
         run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --publish never -c.forceCodeSigning=true -c.mac.hardenedRuntime=true -c.mac.notarize=true
         env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_LINK: ${{ steps.signing.outputs.certificate }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: kevin.mntrc@gmail.com
           APPLE_TEAM_ID: 4UFSUXXTCL
