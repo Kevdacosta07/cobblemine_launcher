@@ -1,6 +1,6 @@
 {
   "name": "cobblemine-launcher",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "private": true,
   "description": "Launcher Cobblemine pour Minecraft 1.21.1",
   "author": "Cobblemine",
@@ -31,7 +31,7 @@
     "appId": "com.cobblemine.launcher",
     "productName": "Cobblemine",
     "directories": {
-      "output": "../../work/desktop-build-0.1.15"
+      "output": "../../work/desktop-build-0.1.16"
     },
     "files": [
       "src/**/*",
