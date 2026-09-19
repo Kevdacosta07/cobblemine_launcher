@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.log
 .ci-smoke/
+/minecraft-auth/build/
+/minecraft-auth/.gradle/

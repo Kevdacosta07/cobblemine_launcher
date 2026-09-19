@@ -1,7 +1,0 @@
-{
- "schemaVersion":1,"id":"cobblemine_auth","version":"1.0.0",
- "name":"Cobblemine — Connexion launcher","environment":"*",
- "entrypoints":{"server":["com.cobblemine.auth.AuthServer"],"client":["com.cobblemine.auth.AuthClient"]},
- "mixins":["cobblemine-auth.mixins.json"],
- "depends":{"fabricloader":">=0.19.5","fabric-api":"*","minecraft":"1.21.1","java":">=21"}
-}
