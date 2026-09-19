@@ -45,3 +45,7 @@ action('open-register',()=>call('open-register'));action('open-account',()=>call
 action('restore-session',async()=>{try{render(await api['restore-session']());$('#signin-error').hidden=true;}catch(e){$('#signin-error').textContent=e.message;$('#signin-error').hidden=false;}});
 action('profile-close',()=>$('#profile-dialog').close());
 action('profile-logout',async()=>{await call('logout');$('#profile-dialog').close();$('#signin-password').value='';$('#signin-password').type='password';$('#show-password').textContent='Afficher';$('#show-password').setAttribute('aria-pressed','false');location.hash='accueil';$('#signin-login').focus();});
+
+function renderWindow(s){const maximized=Boolean(s.maximized);$('#window-maximize').setAttribute('aria-label',maximized?'Restaurer':'Agrandir');$('#window-maximize').title=maximized?'Restaurer':'Agrandir';$('#maximize-shape').setAttribute('d',maximized?'M5.5 3.5h7v7M3.5 5.5h7v7h-7Z':'M3.5 3.5h9v9h-9Z');}
+for(const name of ['window-minimize','window-maximize','window-close'])action(name,()=>call(name));
+if(api){api.onEvent(event=>{if(event.type==='window-state')renderWindow(event);});api['window-state']().then(renderWindow).catch(()=>{});}

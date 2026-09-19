@@ -22,6 +22,10 @@ function handle(name,fn){ipcMain.handle('cobblemine:'+name,async(event,...args)=
 async function choosePack(){idle();const chosen=await dialog.showOpenDialog(win,{title:'Importer le modpack du serveur',filters:[{name:'Modpack Modrinth',extensions:['mrpack']}],properties:['openFile']});if(chosen.canceled)return null;
  return run('Import du modpack',async()=>{const file=chosen.filePaths[0];const info=await inspectPack(file);const target=path.join(root,'packs',info.id+'.mrpack');await fs.mkdir(path.dirname(target),{recursive:true});await fs.copyFile(file,target);selection={archive:target,name:info.plan.name};await atomicJson(path.join(root,'selection.json'),selection);installed=null;await atomicJson(path.join(root,'installed.json'),null);return {name:info.plan.name};});}
 function wire(){
+ handle('window-minimize',()=>win.minimize());
+ handle('window-maximize',()=>{if(win.isMaximized())win.unmaximize();else win.maximize();});
+ handle('window-close',()=>win.close());
+ handle('window-state',()=>({maximized:win.isMaximized()}));
  handle('skin-avatar',()=>{const account=auth.public();return account?require('./skin-avatar.cjs').skinAvatar(account.name):null;});
  handle('check-launcher-update',async()=>{idle();await openStartup();return null;});
  handle('install-launcher-update',()=>updates.install());
@@ -48,7 +52,8 @@ function wire(){
  handle('copy-server',()=>{clipboard.writeText(settings.serverAddress);});
 }
 async function createWindow(){
- win=new BrowserWindow({width:1280,height:820,minWidth:960,minHeight:680,title:'Cobblemine',backgroundColor:'#FFFFFF',icon:path.join(__dirname,'../ui/assets/app-icon.png'),show:false,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
+ win=new BrowserWindow({width:1280,height:820,frame:false,minWidth:960,minHeight:680,title:'Cobblemine',backgroundColor:'#FFFFFF',icon:path.join(__dirname,'../ui/assets/app-icon.png'),show:false,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true}});
+ for(const event of ['maximize','unmaximize'])win.on(event,()=>emit({type:'window-state',maximized:win.isMaximized()}));
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',(event,url)=>{if(url.split('#')[0]!==uiUrl)event.preventDefault();});
  win.webContents.session.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
  win.webContents.session.setPermissionCheckHandler(()=>false);
