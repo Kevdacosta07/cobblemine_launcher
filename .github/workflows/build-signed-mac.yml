@@ -1,0 +1,69 @@
+name: Build signed Mac
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac:
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel
+            arch: x64
+            app: dist/mac/Cobblemine.app
+          - os: macos-15
+            arch: arm64
+            app: dist/mac-arm64/Cobblemine.app
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Check signing configuration
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_APP_SPECIFIC_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+      - run: npm ci
+      - run: npm test
+      - name: Set build directory
+        run: node -e "const fs=require('fs');const p=require('./package.json');p.build.directories.output='dist';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+      - name: Sign and notarize
+        run: npx electron-builder --mac dmg zip --${{ matrix.arch }} --publish never -c.forceCodeSigning=true -c.mac.hardenedRuntime=true -c.mac.notarize=true
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: kevin.mntrc@gmail.com
+          APPLE_TEAM_ID: 4UFSUXXTCL
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      - name: Verify Apple signature and notarization
+        env:
+          APP_PATH: ${{ matrix.app }}
+        run: |
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -Fx 'TeamIdentifier=4UFSUXXTCL'
+          xcrun stapler validate "$APP_PATH"
+          spctl --assess --type execute --verbose=2 "$APP_PATH"
+      - name: Verify packaged launcher and native Java 21
+        run: node scripts/check-platform.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Cobblemine-signed-mac-${{ matrix.arch }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.blockmap
+            dist/latest-mac.yml
+            dist/platform-check.json
+          if-no-files-found: error
